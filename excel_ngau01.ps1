@@ -60,14 +60,26 @@ $Profession = $WorkSheetSource.UsedRange.Columns['A'].rows[3].text
 $i = 1
 while ($true) {
     $teoria = $WorkSheetSource.UsedRange.Columns['B'].rows[$i].text
-    if ($teoria -like '*1.Теоретическое обучение *') {
+    if ($teoria -like '*Теоретическое обучение*') {
         break
     }
     $i++
 }
 $TimeOfTeory = $WorkSheetSource.UsedRange.Columns['C'].rows[$i].text
 #поиск дат занятия теорией
-$ListOfDatesOfTeory = Get-ListOfDates $BeginDate [int]$TimeOfTeory / 8
+$ListOfDatesOfTeory = Get-ListOfDates $BeginDate ([int]$TimeOfTeory / 8)
+#поиск количества часов практики
+$i = 1
+while ($true) {
+    $practika = $WorkSheetSource.UsedRange.Columns['B'].rows[$i].text
+    if ($practika -like '*Производственное обучение*') {
+        break
+    }
+    $i++
+}
+$TimeOfPractice = $WorkSheetSource.UsedRange.Columns['C'].rows[$i].text
+#поиск дат занятия практикой
+$ListOfDatesOfPractice = Get-ListOfDates ($ListOfDatesOfTeory[$ListOfDatesOfTeory.Length - 1].AddDays(1)).toString() ([int]$TimeOfPractice / 8)
 
 
 #Запись данных в файл
@@ -93,8 +105,13 @@ $Range = $WorkSheetSroki.Range('A3','AG3')
 $Range.Merge()
 $Range.HorizontalAlignment = -4108
 #время теории
-$WorkSheetSroki.Cells.Item(4, 1) = 'теория =' + $TimeOfTeory + ' c ' + $ListOfDatesOfTeory[0].Date.ToString("dd.MM.yyyy") + ' г. - по ' + $ListOfDatesOfTeory[$ListOfDatesOfTeory.length - 1].Date.ToString("dd.MM.yyyy") + ' г.'
-
+$WorkSheetSroki.Cells.Item(4, 1) = 'теория = ' + $TimeOfTeory + ' часов c ' + $ListOfDatesOfTeory[0].Date.ToString("dd.MM.yyyy") + ' г. - по ' + $ListOfDatesOfTeory[$ListOfDatesOfTeory.length - 1].Date.ToString("dd.MM.yyyy") + ' г.'
+#время практики
+$WorkSheetSroki.Cells.Item(5, 1) = 'практика = ' + $TimeOfPractice + ' часов c ' + $ListOfDatesOfPractice[0].Date.ToString("dd.MM.yyyy") + ' г. - по ' + $ListOfDatesOfPractice[$ListOfDatesOfPractice.length - 1].Date.ToString("dd.MM.yyyy") + ' г.'
+#7-я строка
+$WorkSheetSroki.Cells.Item(5, 'AF') = 'Час'
+$WorkSheetSroki.Cells.Item(5, 'AG') = 'Дни'
+$WorkSheetSroki.Cells.Item(5, 'AH') = 'Прожив.'
 
 
 
