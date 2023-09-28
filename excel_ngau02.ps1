@@ -1,4 +1,4 @@
-﻿#функция генерации списка дат обучения
+#функция генерации списка дат обучения
 function Get-ListOfDates {
     param (
         [string]$BeginDate,
@@ -7,13 +7,13 @@ function Get-ListOfDates {
     $answer = [System.Collections.ArrayList]::new()
     $FirstDay = Get-Date -Date $BeginDate
     $null = $answer.Add($FirstDay)
-    if ($FirstDay.DayOfWeek -ne 'Sunday' -and -not (Is-Holiday($FirstDay))) {
+    if (-not (Is-Holiday($FirstDay))) {
         $QuantityOfDays--
     }
     while ($QuantityOfDays -ne 0) {
         $FirstDay = $FirstDay.AddDays(1)
         $null = $answer.Add($FirstDay)
-        if ($FirstDay.DayOfWeek -ne 'Sunday' -and -not (Is-Holiday($FirstDay))) {  
+        if (-not (Is-Holiday($FirstDay))) {  
             $QuantityOfDays--
         }
     }
@@ -21,7 +21,7 @@ function Get-ListOfDates {
 }
 
 
-#функция проверки даты на праздичность
+#функция проверки даты на праздичность и выходные
 function Is-Holiday{
     param (
         [DateTime]$MyDate
@@ -39,7 +39,59 @@ function Is-Holiday{
             return $true
         }
     }
-    return $false
+    return $MyDate.DayOfWeek -eq 'Sunday'
+}
+
+
+#функция записи расписания на один месяц
+function Write-One-Month {
+    param (
+        [int[]]$number_of_row_offset,
+        $ListOfDatesOfTeory,
+        $ListOfDatesOfPractice,
+        $months_map,
+        $WorkSheetSroki
+    )
+    if ($ListOfDatesOfTeory.Length -gt $number_of_row_offset[1]) {
+        $WorkSheetSroki.Cells.Item($number_of_row_offset[0], 'A') = $months_map[$ListOfDatesOfTeory[$number_of_row_offset[1]].Month]
+    }
+    
+    $number_of_row_offset[0]++
+    $i = 1;
+    $quantity_of_days = [DateTime]::DaysInMonth($ListOfDatesOfTeory[0].Year, $ListOfDatesOfTeory[0].Month)
+    while ($i -le $quantity_of_days) {
+        $WorkSheetSroki.Cells.Item($number_of_row, $i) = $i
+        $i++
+    }
+    $number_of_row++
+    $list_counter = 0
+    $count_of_days = 0
+    $count_of_hours = 0
+    while ($true) {
+        $day = $ListOfDatesOfTeory[$list_counter].Day
+        $WorkSheetSroki.Cells.Item($number_of_row, $day) = '1'
+        if (Is-Holiday($ListOfDatesOfTeory[$list_counter])) {
+            $WorkSheetSroki.Cells.Item($number_of_row + 1, $day) = 'В'
+        } else {
+            $WorkSheetSroki.Cells.Item($number_of_row + 1, $day) = '8'
+            $count_of_hours += 8
+        }
+        Write-Output '------'
+        Write-Output $quantity_of_days
+        Write-Output $day
+        Write-Output $list_counter
+        Write-Output $ListOfDatesOfTeory.Length
+        Write-Output '------'
+        if ($list_counter -eq $ListOfDatesOfTeory.Length - 1) {
+            break
+        }
+        if ($day -eq $quantity_of_days) {
+            break
+        }
+        $list_counter++
+        $count_of_days++
+    }
+
 }
 
 
@@ -58,10 +110,11 @@ $months_map[10] = 'Месяц октябрь'
 $months_map[11] = 'Месяц ноябрь'
 $months_map[12] = 'Месяц декабрь'
 
+
 #Чтение данных из файла
 $Excel = New-Object -ComObject Excel.Application
 #$Excel.Visible = $true
-$WorkBookSource = $Excel.Workbooks.Open("D:\coding\workplace\pshell\test\ishodnik.xlsx")
+$WorkBookSource = $Excel.Workbooks.Open("C:\test\ishodnik.xlsx")
 $WorkSheetSource = $WorkBookSource.Sheets('1')
 #дата начала занятий
 $BeginDate = ($WorkSheetSource.UsedRange.Columns['A'].rows[1].text -split ": ")[1]
@@ -97,22 +150,21 @@ $TimeOfPractice = $WorkSheetSource.UsedRange.Columns['C'].rows[$i].text
 $ListOfDatesOfPractice = Get-ListOfDates ($ListOfDatesOfTeory[$ListOfDatesOfTeory.Length - 1].AddDays(1)).toString() ([int]$TimeOfPractice / 8)
 #поиск даты консультации
 $DateOfConsultation = $ListOfDatesOfPractice[$ListOfDatesOfPractice.Length - 1].AddDays(1)
-while ((Is-Holiday($DateOfConsultation)) -or ($DateOfConsultation.DayOfWeek -eq 'Sunday')) {
+while (Is-Holiday($DateOfConsultation)) {
     $DateOfConsultation = $DateOfConsultation.AddDays(1)
 }
 #поиск даты экзамена
 $DateOfExam = $DateOfConsultation.AddDays(1)
-while (($DateOfExam.DayOfWeek -eq 'Sunday')  -or (Is-Holiday($DateOfExam))) {
+while (Is-Holiday($DateOfExam)) {
     $DateOfExam = $DateOfExam.AddDays(1)
 }
-
 
 
 #Запись данных в файл-образец
 #Открытие файла
 #$Excel = New-Object -ComObject Excel.Application
 #$Excel.Visible = $true
-$WorkBookSroki = $Excel.Workbooks.Open("D:\coding\workplace\pshell\test\obrazec.xlsx")
+$WorkBookSroki = $Excel.Workbooks.Open("C:\test\obrazec.xlsx")
 $WorkSheetSroki = $WorkBookSroki.Sheets('1')
 #первая строка
 $WorkSheetSroki.Cells.Item(1, 1) = 'Сроки обучения ' + $ListOfDates[0].Date.ToString("dd.MM.yyyy") + ' г. по ' + $ListOfDates[$ListOfDates.Length - 1].Date.ToString("dd.MM.yyyy") + ' г.'
@@ -141,10 +193,41 @@ while ($true) {
     $WorkSheetSroki.Cells.Item($number_of_row, 'A') = $months_map[$ListOfDatesOfTeory[0].Month]
     $number_of_row++
     $i = 1;
-    while ($i -le [DateTime]::DaysInMonth($ListOfDatesOfTeory[0].Year, $ListOfDatesOfTeory[0].Month)) {
+    $quantity_of_days = [DateTime]::DaysInMonth($ListOfDatesOfTeory[0].Year, $ListOfDatesOfTeory[0].Month)
+    while ($i -le $quantity_of_days) {
+        $WorkSheetSroki.Cells.Item($number_of_row, $i) = $i
+        $i++
     }
-    break
+    $number_of_row++
+    $list_counter = 0
+    $count_of_days = 0
+    $count_of_hours = 0
+    while ($true) {
+        $day = $ListOfDatesOfTeory[$list_counter].Day
+        $WorkSheetSroki.Cells.Item($number_of_row, $day) = '1'
+        if (Is-Holiday($ListOfDatesOfTeory[$list_counter])) {
+            $WorkSheetSroki.Cells.Item($number_of_row + 1, $day) = 'В'
+        } else {
+            $WorkSheetSroki.Cells.Item($number_of_row + 1, $day) = '8'
+            $count_of_hours += 8
+        }
+        Write-Output '------'
+        Write-Output $quantity_of_days
+        Write-Output $day
+        Write-Output $list_counter
+        Write-Output $ListOfDatesOfTeory.Length
+        Write-Output '------'
+        if ($list_counter -eq $ListOfDatesOfTeory.Length - 1) {
+            break
+        }
+        if ($day -eq $quantity_of_days) {
+            break
+        }
+        $list_counter++
+        $count_of_days++
+    }
 }
+
 
 
 #test копирование ячеек и очистка их соедержимого
@@ -155,9 +238,7 @@ while ($true) {
 #$range2.ClearContents()
 
 
-
-
 $WorkBookSource.close($true)
-$WorkBookSroki.SaveAs('D:\coding\workplace\pshell\test\sroki.xlsx')
+$WorkBookSroki.SaveAs('C:\test\sroki.xlsx')
 $WorkBookSroki.close($true)
 $Excel.Quit()
