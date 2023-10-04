@@ -1,4 +1,4 @@
-﻿#функция генерации списка дат обучения (теория, практика, консультация и экзамен)
+#функция генерации списка дат обучения (теория, практика, консультация и экзамен)
 function Get-ListOfDates {
     param (
         [string]$BeginDate,
@@ -88,7 +88,7 @@ $months_map[12] = 'Месяц декабрь'
 
 #Чтение данных из файла
 $Excel = New-Object -ComObject Excel.Application
-$WorkBookSource = $Excel.Workbooks.Open("D:\coding\workplace\pshell\test\ishodnik.xlsx")
+$WorkBookSource = $Excel.Workbooks.Open("C:\test\ishodnik.xlsx")
 $WorkSheetSource = $WorkBookSource.Sheets('1')
 #дата начала занятий
 $BeginDate = ($WorkSheetSource.UsedRange.Columns['A'].rows[1].text -split ": ")[1]
@@ -167,7 +167,7 @@ while ($i -lt $ListOfDates.Length) {
 
 #Запись данных в файл-образец
 #Открытие файла
-$WorkBookSroki = $Excel.Workbooks.Open("D:\coding\workplace\pshell\test\obrazec.xlsx")
+$WorkBookSroki = $Excel.Workbooks.Open("C:\test\obrazec.xlsx")
 $WorkSheetSroki = $WorkBookSroki.Sheets('1')
 #первая строка
 $WorkSheetSroki.Cells.Item(1, 1) = 'Сроки обучения ' + $ListOfDates[0][0].Date.ToString("dd.MM.yyyy") + ' г. по ' + $DayOfExam.Date.ToString("dd.MM.yyyy") + ' г.'
@@ -230,14 +230,18 @@ while ($index -ne $ListOfDates.Length) {
         $WorkSheetSroki.Cells.Item($number_of_row + 4, $day[0].Day) = '8'
         $hours_of_practice += 8
     } elseif ($day[1] -eq 'к') {
-        $WorkSheetSroki.Cells.Item($number_of_row + 4, $day[0].Day) = 'к'
+        $WorkSheetSroki.Cells.Item($number_of_row + 4, $day[0].Day) = '8'
         $hours_of_practice += 8
     } elseif ($day[1] -eq 'э') {
-        $WorkSheetSroki.Cells.Item($number_of_row + 4, $day[0].Day) = 'э'
+        $WorkSheetSroki.Cells.Item($number_of_row + 4, $day[0].Day) = '8'
         $hours_of_practice += 8
     }
     else {
-        $WorkSheetSroki.Cells.Item($number_of_row + 4, $day[0].Day) = 'В'
+        if ($ListOfDates[$index - 1][1] -eq 'T') {
+            $WorkSheetSroki.Cells.Item($number_of_row + 3, $day[0].Day) = 'В'
+        } else {
+            $WorkSheetSroki.Cells.Item($number_of_row + 4, $day[0].Day) = 'В'
+        }
     }
     if (($day[0].Day -eq [DateTime]::DaysInMonth($day[0].Year, $day[0].Month) -or ($index -eq ($ListOfDates.Length - 1)))) {
         $WorkSheetSroki.Cells.Item($number_of_row + 2, 'AG') = $count_of_days
@@ -257,6 +261,6 @@ $WorkSheetSroki.Cells.Item($number_of_row - 5, 'AG') = $days_of_studies
 
 #сохранение, закрытие файлов, закрытие Excel
 $WorkBookSource.close($true)
-$WorkBookSroki.SaveAs('D:\coding\workplace\pshell\test\sroki.xlsx')
+$WorkBookSroki.SaveAs('C:\test\sroki.xlsx')
 $WorkBookSroki.close($true)
 $Excel.Quit()
