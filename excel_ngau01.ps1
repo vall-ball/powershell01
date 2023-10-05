@@ -88,7 +88,7 @@ $months_map[12] = 'Месяц декабрь'
 
 #Чтение данных из файла
 $Excel = New-Object -ComObject Excel.Application
-$WorkBookSource = $Excel.Workbooks.Open("C:\test\ishodnik.xlsx")
+$WorkBookSource = $Excel.Workbooks.Open("D:\coding\workplace\pshell\test\ishodnik.xlsx")
 $WorkSheetSource = $WorkBookSource.Sheets('1')
 #дата начала занятий
 $BeginDate = ($WorkSheetSource.UsedRange.Columns['A'].rows[1].text -split ": ")[1]
@@ -167,7 +167,7 @@ while ($i -lt $ListOfDates.Length) {
 
 #Запись данных в файл-образец
 #Открытие файла
-$WorkBookSroki = $Excel.Workbooks.Open("C:\test\obrazec.xlsx")
+$WorkBookSroki = $Excel.Workbooks.Open("D:\coding\workplace\pshell\test\obrazec.xlsx")
 $WorkSheetSroki = $WorkBookSroki.Sheets('1')
 #первая строка
 $WorkSheetSroki.Cells.Item(1, 1) = 'Сроки обучения ' + $ListOfDates[0][0].Date.ToString("dd.MM.yyyy") + ' г. по ' + $DayOfExam.Date.ToString("dd.MM.yyyy") + ' г.'
@@ -261,6 +261,6 @@ $WorkSheetSroki.Cells.Item($number_of_row - 5, 'AG') = $days_of_studies
 
 #сохранение, закрытие файлов, закрытие Excel
 $WorkBookSource.close($true)
-$WorkBookSroki.SaveAs('C:\test\sroki.xlsx')
+$WorkBookSroki.SaveAs('D:\coding\workplace\pshell\test\sroki.xlsx')
 $WorkBookSroki.close($true)
 $Excel.Quit()
